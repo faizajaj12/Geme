@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Arena - Game Tembak Tembakan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            height: 80vh;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 50, 50, 0.5);
+            overflow: hidden;
+            position: relative;
+            border: 2px solid #ff4500;
+        }
+
+        .game-header {
+            background: linear-gradient(to right, #8B0000, #B22222, #8B0000);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 2px solid #ff4500;
+            position: relative;
+            z-index: 10;
+        }
+
+        .game-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff4500, 0 0 20px #ff4500;
+            letter-spacing: 2px;
+            animation: glow 2s infinite alternate;
+        }
+
+        .game-content {
+            display: flex;
+            height: calc(100% - 80px);
+        }
+
+        .game-area {
+            flex: 3;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%231a1a2e"/><path d="M0 0L100 100M100 0L0 100" stroke="%23342e4e" stroke-width="1"/></svg>');
+            position: relative;
+            overflow: hidden;
+        }
+
+        .player {
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(to bottom, #4a4a4a, #2a2a2a);
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 5;
+        }
+
+        .player::before {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 40px;
+            background: #333;
+            top: -40px;
+            left: 15px;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .player::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #555;
+            top: -60px;
+            left: 20px;
+            border-radius: 50%;
+        }
+
+        .enemy {
+            width: 50px;
+            height: 70px;
+            background: linear-gradient(to bottom, #8B0000, #600000);
+            position: absolute;
+            top: 100px;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 0 10px rgba(139, 0, 0, 0.7);
+            animation: enemyMove 3s infinite alternate;
+            z-index: 4;
+        }
+
+        .enemy::before {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 35px;
+            background: #700000;
+            top: -35px;
+            left: 12.5px;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .enemy::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: #900000;
+            top: -50px;
+            left: 17.5px;
+            border-radius: 50%;
+        }
+
+        .bullet {
+            width: 5px;
+            height: 15px;
+            background: yellow;
+            position: absolute;
+            border-radius: 2px;
+            box-shadow: 0 0 5px yellow, 0 0 10px orange;
+            z-index: 3;
+        }
+
+        .explosion {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #ff4500, #ff0000, transparent);
+            border-radius: 50%;
+            animation: explode 0.5s forwards;
+            z-index: 6;
+        }
+
+        .terrain {
+            position: absolute;
+            background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
+            border-radius: 5px;
+        }
+
+        .terrain-1 {
+            width: 120px;
+            height: 40px;
+            bottom: 100px;
+            left: 50px;
+        }
+
+        .terrain-2 {
+            width: 80px;
+            height: 60px;
+            bottom: 100px;
+            right: 100px;
+        }
+
+        .terrain-3 {
+            width: 150px;
+            height: 30px;
+            bottom: 180px;
+            left: 200px;
+        }
+
+        .game-ui {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-left: 2px solid #ff4500;
+        }
+
+        .stats {
+            background: rgba(50, 50, 50, 0.7);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ff4500;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .health-bar {
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+            border: 1px solid #555;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(to right, #ff0000, #ff4500);
+            width: 80%;
+            transition: width 0.3s;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 10px;
+            background: linear-gradient(to bottom, #555, #333);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            border: 1px solid #ff4500;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: linear-gradient(to bottom, #666, #444);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(255, 69, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-fire {
+            background: linear-gradient(to bottom, #ff4500, #cc0000);
+            grid-column: span 2;
+        }
+
+        .btn-fire:hover {
+            background: linear-gradient(to bottom, #ff5500, #dd0000);
+        }
+
+        .game-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 20;
+        }
+
+        .start-screen {
+            text-align: center;
+        }
+
+        .start-btn {
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            background: linear-gradient(to bottom, #ff4500, #cc0000);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 30px;
+            border: 2px solid #ffaa00;
+            transition: all 0.3s;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.7);
+        }
+
+        .game-over {
+            display: none;
+        }
+
+        .score-display {
+            font-size: 3rem;
+            color: #ff4500;
+            text-shadow: 0 0 10px rgba(255, 69, 0, 0.7);
+            margin: 20px 0;
+        }
+
+        .ammo-display {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .ammo-bullet {
+            width: 10px;
+            height: 20px;
+            background: #ffaa00;
+            border-radius: 2px;
+            box-shadow: 0 0 5px #ffaa00;
+        }
+
+        .ammo-empty {
+            background: #555;
+            box-shadow: none;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px #ff4500, 0 0 20px #ff4500;
+            }
+            to {
+                text-shadow: 0 0 15px #ff4500, 0 0 30px #ff4500, 0 0 40px #ff4500;
+            }
+        }
+
+        @keyframes enemyMove {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(100px);
+            }
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .hit-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 0, 0, 0.3);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 15;
+        }
+
+        .hit-effect.active {
+            animation: hitFlash 0.3s;
+        }
+
+        @keyframes hitFlash {
+            0% { opacity: 0.7; }
+            100% { opacity: 0; }
+        }
+
+        .power-up {
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, #00ff00, #008800);
+            border-radius: 50%;
+            position: absolute;
+            animation: float 3s infinite ease-in-out;
+            box-shadow: 0 0 10px #00ff00;
+            z-index: 4;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Efek partikel */
+        .particle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: #ffaa00;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        /* Responsif */
+        @media (max-width: 768px) {
+            .game-content {
+                flex-direction: column;
+            }
+            
+            .game-ui {
+                border-left: none;
+                border-top: 2px solid #ff4500;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+            
+            .btn-fire {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1 class="game-title">BATTLE ARENA</h1>
+        </div>
+        
+        <div class="game-content">
+            <div class="game-area" id="gameArea">
+                <div class="player" id="player"></div>
+                <div class="terrain terrain-1"></div>
+                <div class="terrain terrain-2"></div>
+                <div class="terrain terrain-3"></div>
+                <div class="hit-effect" id="hitEffect"></div>
+            </div>
+            
+            <div class="game-ui">
+                <div class="stats">
+                    <div class="stat-item">
+                        <span>Skor:</span>
+                        <span id="score">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Nyawa:</span>
+                        <span id="lives">3</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Level:</span>
+                        <span id="level">1</span>
+                    </div>
+                    <div class="health-bar">
+                        <div class="health-fill" id="healthBar"></div>
+                    </div>
+                </div>
+                
+                <div class="ammo-display" id="ammoDisplay">
+                    <!-- Ammo akan diisi oleh JavaScript -->
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-left" id="btnLeft">Kiri</button>
+                    <button class="btn btn-right" id="btnRight">Kanan</button>
+                    <button class="btn btn-up" id="btnUp">Lompat</button>
+                    <button class="btn btn-fire" id="btnFire">TEMBAK!</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-screen start-screen" id="startScreen">
+            <h1>BATTLE ARENA</h1>
+            <p>Game Tembak-Tembakan 3D</p>
+            <p>Hancurkan musuh dan kumpulkan poin!</p>
+            <button class="start-btn" id="startBtn">MULAI PERMAINAN</button>
+        </div>
+        
+        <div class="game-screen game-over" id="gameOverScreen">
+            <h1>GAME OVER</h1>
+            <p>Skor Akhir Anda:</p>
+            <div class="score-display" id="finalScore">0</div>
+            <button class="start-btn" id="restartBtn">MAIN LAGI</button>
+        </div>
+    </div>
+
+    <script>
+        // Elemen DOM
+        const gameArea = document.getElementById('gameArea');
+        const player = document.getElementById('player');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const scoreDisplay = document.getElementById('score');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const livesDisplay = document.getElementById('lives');
+        const levelDisplay = document.getElementById('level');
+        const healthBar = document.getElementById('healthBar');
+        const ammoDisplay = document.getElementById('ammoDisplay');
+        const hitEffect = document.getElementById('hitEffect');
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+        const btnUp = document.getElementById('btnUp');
+        const btnFire = document.getElementById('btnFire');
+
+        // Variabel game
+        let gameActive = false;
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let health = 100;
+        let ammo = 10;
+        let playerX = 0;
+        let enemies = [];
+        let bullets = [];
+        let powerUps = [];
+        let keys = {};
+        let lastShotTime = 0;
+        let shootCooldown = 300; // ms
+
+        // Inisialisasi ammo display
+        function initAmmoDisplay() {
+            ammoDisplay.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const bullet = document.createElement('div');
+                bullet.className = i < ammo ? 'ammo-bullet' : 'ammo-bullet ammo-empty';
+                ammoDisplay.appendChild(bullet);
+            }
+        }
+
+        // Update ammo display
+        function updateAmmoDisplay() {
+            const bullets = ammoDisplay.querySelectorAll('.ammo-bullet');
+            bullets.forEach((bullet, index) => {
+                bullet.className = index < ammo ? 'ammo-bullet' : 'ammo-bullet ammo-empty';
+            });
+        }
+
+        // Membuat musuh
+        function createEnemy() {
+            const enemy = document.createElement('div');
+            enemy.className = 'enemy';
+            
+            // Posisi acak di bagian atas layar
+            const xPos = Math.random() * (gameArea.offsetWidth - 50);
+            enemy.style.left = xPos + 'px';
+            
+            // Kecepatan acak
+            const speed = 2 + Math.random() * 2;
+            enemy.speed = speed;
+            
+            // Health musuh
+            enemy.health = 30 + (level * 10);
+            
+            gameArea.appendChild(enemy);
+            enemies.push(enemy);
+            
+            // Animasi gerakan musuh
+            let direction = 1;
+            let moveInterval = setInterval(() => {
+                if (!gameActive) {
+                    clearInterval(moveInterval);
+                    return;
+                }
+                
+                const currentX = parseInt(enemy.style.left);
+                if (currentX <= 0 || currentX >= gameArea.offsetWidth - 50) {
+                    direction *= -1;
+                }
+                
+                enemy.style.left = (currentX + (direction * speed)) + 'px';
+            }, 30);
+            
+            // Musuh menembak
+            setInterval(() => {
+                if (!gameActive) return;
+                if (Math.random() < 0.01) {
+                    createEnemyBullet(enemy);
+                }
+            }, 1000);
+        }
+
+        // Membuat peluru musuh
+        function createEnemyBullet(enemy) {
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            bullet.style.backgroundColor = '#ff0000';
+            bullet.style.boxShadow = '0 0 5px #ff0000, 0 0 10px #ff0000';
+            
+            const enemyRect = enemy.getBoundingClientRect();
+            const playerRect = player.getBoundingClientRect();
+            
+            bullet.style.left = (enemyRect.left + enemyRect.width/2 - 2.5) + 'px';
+            bullet.style.top = (enemyRect.top + enemyRect.height) + 'px';
+            
+            gameArea.appendChild(bullet);
+            
+            // Arah peluru ke player
+            const angle = Math.atan2(
+                playerRect.top - enemyRect.top,
+                playerRect.left - enemyRect.left
+            );
+            
+            const speed = 5;
+            const dx = Math.cos(angle) * speed;
+            const dy = Math.sin(angle) * speed;
+            
+            bullet.dx = dx;
+            bullet.dy = dy;
+            
+            bullets.push(bullet);
+        }
+
+        // Membuat power-up
+        function createPowerUp() {
+            if (Math.random() < 0.02) {
+                const powerUp = document.createElement('div');
+                powerUp.className = 'power-up';
+                
+                const xPos = Math.random() * (gameArea.offsetWidth - 30);
+                powerUp.style.left = xPos + 'px';
+                powerUp.style.top = '50px';
+                
+                gameArea.appendChild(powerUp);
+                powerUps.push(powerUp);
+                
+                // Power-up jatuh
+                let fallInterval = setInterval(() => {
+                    if (!gameActive) {
+                        clearInterval(fallInterval);
+                        return;
+                    }
+                    
+                    const currentTop = parseInt(powerUp.style.top);
+                    if (currentTop > gameArea.offsetHeight - 50) {
+                        clearInterval(fallInterval);
+                        gameArea.removeChild(powerUp);
+                        powerUps = powerUps.filter(p => p !== powerUp);
+                        return;
+                    }
+                    
+                    powerUp.style.top = (currentTop + 2) + 'px';
+                    
+                    // Cek tabrakan dengan player
+                    const powerUpRect = powerUp.getBoundingClientRect();
+                    const playerRect = player.getBoundingClientRect();
+                    
+                    if (
+                        powerUpRect.left < playerRect.right &&
+                        powerUpRect.right > playerRect.left &&
+                        powerUpRect.top < playerRect.bottom &&
+                        powerUpRect.bottom > playerRect.top
+                    ) {
+                        // Player mendapatkan power-up
+                        collectPowerUp(powerUp);
+                        clearInterval(fallInterval);
+                    }
+                }, 50);
+            }
+        }
+
+        // Mengumpulkan power-up
+        function collectPowerUp(powerUp) {
+            gameArea.removeChild(powerUp);
+            powerUps = powerUps.filter(p => p !== powerUp);
+            
+            // Efek power-up acak
+            const effect = Math.floor(Math.random() * 3);
+            switch(effect) {
+                case 0: // Health
+                    health = Math.min(100, health + 30);
+                    healthBar.style.width = health + '%';
+                    createFloatingText("+30 HEALTH", player);
+                    break;
+                case 1: // Ammo
+                    ammo = Math.min(10, ammo + 5);
+                    updateAmmoDisplay();
+                    createFloatingText("+5 AMMO", player);
+                    break;
+                case 2: // Score
+                    score += 100;
+                    scoreDisplay.textContent = score;
+                    createFloatingText("+100 POIN", player);
+                    break;
+            }
+            
+            // Efek partikel
+            createParticles(powerUp.getBoundingClientRect().left + 15, powerUp.getBoundingClientRect().top + 15, 10, '#00ff00');
+        }
+
+        // Membuat teks melayang
+        function createFloatingText(text, element) {
+            const floatingText = document.createElement('div');
+            floatingText.textContent = text;
+            floatingText.style.position = 'absolute';
+            floatingText.style.color = '#00ff00';
+            floatingText.style.fontWeight = 'bold';
+            floatingText.style.textShadow = '0 0 5px #00ff00';
+            floatingText.style.pointerEvents = 'none';
+            floatingText.style.zIndex = '10';
+            
+            const rect = element.getBoundingClientRect();
+            floatingText.style.left = (rect.left + rect.width/2) + 'px';
+            floatingText.style.top = (rect.top - 20) + 'px';
+            
+            document.body.appendChild(floatingText);
+            
+            // Animasi naik dan fade out
+            let opacity = 1;
+            let top = parseInt(floatingText.style.top);
+            
+            const animateText = setInterval(() => {
+                opacity -= 0.02;
+                top -= 2;
+                
+                floatingText.style.opacity = opacity;
+                floatingText.style.top = top + 'px';
+                
+                if (opacity <= 0) {
+                    clearInterval(animateText);
+                    document.body.removeChild(floatingText);
+                }
+            }, 50);
+        }
+
+        // Membuat partikel
+        function createParticles(x, y, count, color) {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.backgroundColor = color;
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                
+                document.body.appendChild(particle);
+                
+                // Arah acak
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 3;
+                const dx = Math.cos(angle) * speed;
+                const dy = Math.sin(angle) * speed;
+                
+                let opacity = 1;
+                
+                const animateParticle = setInterval(() => {
+                    opacity -= 0.03;
+                    particle.style.opacity = opacity;
+                    particle.style.left = (parseFloat(particle.style.left) + dx) + 'px';
+                    particle.style.top = (parseFloat(particle.style.top) + dy) + 'px';
+                    
+                    if (opacity <= 0) {
+                        clearInterval(animateParticle);
+                        document.body.removeChild(particle);
+                    }
+                }, 30);
+            }
+        }
+
+        // Player menembak
+        function playerShoot() {
+            if (!gameActive) return;
+            
+            const currentTime = Date.now();
+            if (currentTime - lastShotTime < shootCooldown) return;
+            if (ammo <= 0) return;
+            
+            lastShotTime = currentTime;
+            ammo--;
+            updateAmmoDisplay();
+            
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            
+            const playerRect = player.getBoundingClientRect();
+            bullet.style.left = (playerRect.left + playerRect.width/2 - 2.5) + 'px';
+            bullet.style.top = (playerRect.top - 15) + 'px';
+            
+            gameArea.appendChild(bullet);
+            bullets.push(bullet);
+            
+            // Efek suara (placeholder)
+            const audio = new Audio();
+            audio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+            audio.play().catch(e => console.log("Audio play failed:", e));
+            
+            // Efek partikel
+            createParticles(
+                playerRect.left + playerRect.width/2,
+                playerRect.top,
+                5,
+                '#ffff00'
+            );
+        }
+
+        // Update game
+        function updateGame() {
+            if (!gameActive) return;
+            
+            // Update peluru
+            bullets.forEach((bullet, index) => {
+                if (!bullet.dx && !bullet.dy) {
+                    // Peluru player
+                    const currentTop = parseInt(bullet.style.top);
+                    bullet.style.top = (currentTop - 7) + 'px';
+                    
+                    // Hapus jika keluar layar
+                    if (currentTop < -15) {
+                        gameArea.removeChild(bullet);
+                        bullets.splice(index, 1);
+                    }
+                } else {
+                    // Peluru musuh
+                    const currentLeft = parseInt(bullet.style.left);
+                    const currentTop = parseInt(bullet.style.top);
+                    
+                    bullet.style.left = (currentLeft + bullet.dx) + 'px';
+                    bullet.style.top = (currentTop + bullet.dy) + 'px';
+                    
+                    // Hapus jika keluar layar
+                    if (
+                        currentTop < -15 ||
+                        currentTop > gameArea.offsetHeight ||
+                        currentLeft < -15 ||
+                        currentLeft > gameArea.offsetWidth
+                    ) {
+                        gameArea.removeChild(bullet);
+                        bullets.splice(index, 1);
+                    }
+                }
+                
+                // Cek tabrakan peluru player dengan musuh
+                if (!bullet.dx && !bullet.dy) {
+                    const bulletRect = bullet.getBoundingClientRect();
+                    
+                    enemies.forEach((enemy, enemyIndex) => {
+                        const enemyRect = enemy.getBoundingClientRect();
+                        
+                        if (
+                            bulletRect.left < enemyRect.right &&
+                            bulletRect.right > enemyRect.left &&
+                            bulletRect.top < enemyRect.bottom &&
+                            bulletRect.bottom > enemyRect.top
+                        ) {
+                            // Tabrakan terjadi
+                            enemy.health -= 10;
+                            
+                            // Efek ledakan
+                            const explosion = document.createElement('div');
+                            explosion.className = 'explosion';
+                            explosion.style.left = (bulletRect.left - 20) + 'px';
+                            explosion.style.top = (bulletRect.top - 20) + 'px';
+                            gameArea.appendChild(explosion);
+                            
+                            setTimeout(() => {
+                                if (gameArea.contains(explosion)) {
+                                    gameArea.removeChild(explosion);
+                                }
+                            }, 500);
+                            
+                            // Hapus peluru
+                            gameArea.removeChild(bullet);
+                            bullets.splice(index, 1);
+                            
+                            // Hapus musuh jika health habis
+                            if (enemy.health <= 0) {
+                                gameArea.removeChild(enemy);
+                                enemies.splice(enemyIndex, 1);
+                                score += 50;
+                                scoreDisplay.textContent = score;
+                                
+                                // Efek partikel
+                                createParticles(
+                                    enemyRect.left + enemyRect.width/2,
+                                    enemyRect.top + enemyRect.height/2,
+                                    15,
+                                    '#ff4500'
+                                );
+                                
+                                // Cek level up
+                                if (score % 500 === 0) {
+                                    levelUp();
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Cek tabrakan peluru musuh dengan player
+                else if (bullet.dx && bullet.dy) {
+                    const bulletRect = bullet.getBoundingClientRect();
+                    const playerRect = player.getBoundingClientRect();
+                    
+                    if (
+                        bulletRect.left < playerRect.right &&
+                        bulletRect.right > playerRect.left &&
+                        bulletRect.top < playerRect.bottom &&
+                        bulletRect.bottom > playerRect.top
+                    ) {
+                        // Player kena tembak
+                        health -= 10;
+                        healthBar.style.width = health + '%';
+                        
+                        // Efek flash
+                        hitEffect.classList.add('active');
+                        setTimeout(() => {
+                            hitEffect.classList.remove('active');
+                        }, 300);
+                        
+                        // Hapus peluru
+                        gameArea.removeChild(bullet);
+                        bullets.splice(index, 1);
+                        
+                        // Cek game over
+                        if (health <= 0) {
+                            lives--;
+                            livesDisplay.textContent = lives;
+                            health = 100;
+                            healthBar.style.width = '100%';
+                            
+                            if (lives <= 0) {
+                                gameOver();
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Buat musuh baru
+            if (enemies.length < 3 + level) {
+                if (Math.random() < 0.02) {
+                    createEnemy();
+                }
+            }
+            
+            // Buat power-up
+            createPowerUp();
+            
+            // Update level
+            levelDisplay.textContent = level;
+        }
+
+        // Level up
+        function levelUp() {
+            level++;
+            createFloatingText("LEVEL UP!", player);
+            
+            // Reset health dan tambah ammo
+            health = 100;
+            healthBar.style.width = '100%';
+            ammo = 10;
+            updateAmmoDisplay();
+        }
+
+        // Game over
+        function gameOver() {
+            gameActive = false;
+            finalScoreDisplay.textContent = score;
+            gameOverScreen.style.display = 'flex';
+            
+            // Hapus semua musuh dan peluru
+            enemies.forEach(enemy => gameArea.removeChild(enemy));
+            bullets.forEach(bullet => gameArea.removeChild(bullet));
+            powerUps.forEach(powerUp => gameArea.removeChild(powerUp));
+            
+            enemies = [];
+            bullets = [];
+            powerUps = [];
+        }
+
+        // Mulai game
+        function startGame() {
+            gameActive = true;
+            score = 0;
+            lives = 3;
+            level = 1;
+            health = 100;
+            ammo = 10;
+            
+            scoreDisplay.textContent = score;
+            livesDisplay.textContent = lives;
+            levelDisplay.textContent = level;
+            healthBar.style.width = '100%';
+            
+            initAmmoDisplay();
+            
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            
+            // Game loop
+            setInterval(updateGame, 30);
+        }
+
+        // Event listeners
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+        btnLeft.addEventListener('mousedown', () => {
+            keys['ArrowLeft'] = true;
+        });
+        
+        btnLeft.addEventListener('mouseup', () => {
+            keys['ArrowLeft'] = false;
+        });
+        
+        btnLeft.addEventListener('touchstart', () => {
+            keys['ArrowLeft'] = true;
+        });
+        
+        btnLeft.addEventListener('touchend', () => {
+            keys['ArrowLeft'] = false;
+        });
+
+        btnRight.addEventListener('mousedown', () => {
+            keys['ArrowRight'] = true;
+        });
+        
+        btnRight.addEventListener('mouseup', () => {
+            keys['ArrowRight'] = false;
+        });
+        
+        btnRight.addEventListener('touchstart', () => {
+            keys['ArrowRight'] = true;
+        });
+        
+        btnRight.addEventListener('touchend', () => {
+            keys['ArrowRight'] = false;
+        });
+
+        btnUp.addEventListener('mousedown', () => {
+            keys['ArrowUp'] = true;
+            setTimeout(() => {
+                keys['ArrowUp'] = false;
+            }, 500);
+        });
+        
+        btnUp.addEventListener('touchstart', () => {
+            keys['ArrowUp'] = true;
+            setTimeout(() => {
+                keys['ArrowUp'] = false;
+            }, 500);
+        });
+
+        btnFire.addEventListener('click', playerShoot);
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            if (e.key === ' ') {
+                playerShoot();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Player movement
+        function movePlayer() {
+            if (!gameActive) return;
+            
+            const playerRect = player.getBoundingClientRect();
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            
+            if (keys['ArrowLeft'] && playerRect.left > gameAreaRect.left + 10) {
+                playerX -= 5;
+                player.style.left = `calc(50% + ${playerX}px)`;
+            }
+            
+            if (keys['ArrowRight'] && playerRect.right < gameAreaRect.right - 10) {
+                playerX += 5;
+                player.style.left = `calc(50% + ${playerX}px)`;
+            }
+            
+            if (keys['ArrowUp']) {
+                // Lompat (animasi sederhana)
+                player.style.transition = 'transform 0.3s';
+                player.style.transform = 'translateX(-50%) translateY(-20px)';
+                
+                setTimeout(() => {
+                    player.style.transform = 'translateX(-50%) translateY(0)';
+                }, 300);
+            }
+        }
+
+        setInterval(movePlayer, 16); // ~60fps
+
+        // Inisialisasi
+        initAmmoDisplay();
+    </script>
+</body>
+</html>
